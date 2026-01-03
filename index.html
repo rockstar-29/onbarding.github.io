@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Joinee Upload Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background-color: #f4f7f6; }
+        .upload-card { 
+            background: white; padding: 25px; border-radius: 10px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 450px; margin: auto; 
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { 
+            width: 100%; padding: 12px; background-color: #0078d4; color: white; 
+            border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px;
+        }
+        /* Style for the Progress Bar */
+        progress { width: 100%; height: 20px; margin-top: 15px; display: none; }
+        #status { margin-top: 20px; text-align: center; font-weight: bold; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="upload-card">
+    <h2 style="text-align: center;">Onboarding Documents</h2>
+    
+    <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="userName" placeholder="e.g. Dilip Vyas">
+    </div>
+
+    <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="userEmail" placeholder="e.g. dilip@live.com">
+    </div>
+
+    <div class="form-group">
+        <label>Select Files (PDF, DOCX, TXT)</label>
+        <input type="file" id="userFile" accept=".pdf,.docx,.doc,.txt" multiple>
+    </div>
+
+    <button type="button" onclick="uploadData()">Submit Documents</button>
+
+    <progress id="uploadProgress" value="0" max="100"></progress>
+    <p id="status"></p>
+</div>
+
+<script>
+    async function uploadData() {
+        const nameInp = document.getElementById("userName");
+        const emailInp = document.getElementById("userEmail");
+        const fileInp = document.getElementById("userFile");
+        const statusLbl = document.getElementById("status");
+        const progressBar = document.getElementById("uploadProgress");
+
+        if (!nameInp.value || !emailInp.value || fileInp.files.length === 0) {
+            alert("Please provide name, email, and select at least one file.");
+            return;
+        }
+
+        const files = fileInp.files;
+        const totalFiles = files.length;
+        const azureUrl = "https://uploadnode-c9gudfdvb3cpf5ca.canadacentral-01.azurewebsites.net/api/GuestUpload?";
+        const today = new Date().toISOString().split('T')[0];
+
+        // Reset and show progress bar
+        statusLbl.style.color = "#0078d4";
+        progressBar.style.display = "block";
+        progressBar.value = 0;
+
+        for (let i = 0; i < totalFiles; i++) {
+            const file = files[i];
+            statusLbl.innerText = `Uploading (${i + 1}/${totalFiles}): ${file.name}`;
+
+            const finalUrl = `${azureUrl}?name=${encodeURIComponent(file.name)}&userName=${encodeURIComponent(nameInp.value)}&userEmail=${encodeURIComponent(emailInp.value)}&date=${encodeURIComponent(today)}`;
+
+            try {
+                const response = await fetch(finalUrl, {
+                    method: "POST",
+                    body: file 
+                });
+
+                if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
+
+                // Update progress percentage
+                const percentComplete = Math.round(((i + 1) / totalFiles) * 100);
+                progressBar.value = percentComplete;
+
+            } catch (err) {
+                statusLbl.style.color = "red";
+                statusLbl.innerText = "Error: " + err.message;
+                return;
+            }
+        }
+
+        statusLbl.style.color = "green";
+        statusLbl.innerText = "All documents submitted successfully!";
+        // Clear files after success
+        fileInp.value = ""; 
+    }
+</script>
+
+</body>
+</html>
