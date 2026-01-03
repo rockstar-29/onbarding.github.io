@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding Portal</title>
+    <style>
+        :root {
+            --primary-color: #0078d4;
+            --secondary-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --success-green: #28a745;
+            --text-dark: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #ffffff;
+        }
+
+        /* --- HEADER --- */
+        header {
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .logo { height: 45px; margin-right: 15px; }
+        .company-name { font-size: 22px; font-weight: 700; color: #444; }
+
+        /* --- MAIN CONTENT --- */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 550px;
+            text-align: center;
+        }
+
+        h1 { font-size: 32px; font-weight: 600; margin-bottom: 8px; color: var(--text-dark); }
+        .subtitle { color: #666; font-size: 16px; margin-bottom: 30px; }
+
+        /* Form Inputs */
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="email"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        input:focus { border-color: var(--primary-color); }
+
+        /* Drag and Drop Zone */
+        #drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 45px 20px;
+            background-color: var(--secondary-bg);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        #drop-zone.dragover {
+            border-color: var(--primary-color);
+            background-color: #eef7ff;
+        }
+        .upload-icon { font-size: 48px; margin-bottom: 10px; display: block; }
+        .browse-label {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 8px 25px;
+            background-color: #ffe0b2;
+            color: #5d4037;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        #file-list {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .file-item {
+            font-size: 13px;
+            color: #555;
+            background: #fff;
+            padding: 5px 10px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+
+        /* Submit Button */
+        #submit-btn {
+            margin-top: 30px;
+            padding: 14px 50px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 30px;
+            background-color: #e0e0e0;
+            color: #888;
+            cursor: not-allowed;
+            transition: 0.3s;
+        }
+        #submit-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+        }
+
+        /* --- SUCCESS SCREEN --- */
+        #success-screen { display: none; }
+        .success-icon { font-size: 64px; color: var(--success-green); margin-bottom: 20px; }
+
+        /* --- FOOTER --- */
+        footer {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: #888;
+            background: #fff;
+        }
+        .footer-links span { margin-right: 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="https://e-uploads.powerappsportals.com/Logo-sm-64.png" alt="Logo" class="logo" onerror="this.style.display='none'">
+        <span class="company-name">IT Adroit</span>
+    </header>
+
+    <main>
+        <div id="upload-screen" class="container">
+            <h1>Upload your resume</h1>
+            <p class="subtitle">Drag and drop your existing resume to get started.</p>
+
+            <div class="input-row">
+                <input type="text" id="userName" placeholder="Full Name" oninput="checkForm()">
+                <input type="email" id="userEmail" placeholder="Email Address" oninput="checkForm()">
+            </div>
+
+            <div id="drop-zone" onclick="document.getElementById('userFile').click()">
+                <span class="upload-icon">📁</span>
+                <p style="margin: 5px 0;"><strong>Drag & drop your file here or</strong></p>
+                <span class="browse-label">Browse</span>
+                <input type="file" id="userFile" multiple hidden onchange="handleFiles(this.files)">
+            </div>
+
+            <div id="file-list"></div>
+
+            <button id="submit-btn" onclick="uploadData()" disabled>Upload</button>
+            <p id="status-text" style="margin-top:15px; font-size: 14px;"></p>
+        </div>
+
+        <div id="success-screen" class="container">
+            <div class="success-icon">✓</div>
+            <h1>Submission Received</h1>
+            <p class="subtitle">Your files have been successfully uploaded to the onboarding folder.</p>
+            <button id="refresh-btn" class="active" onclick="startAgain()" 
+                style="padding: 12px 40px; border-radius: 30px; border: none; background: var(--primary-color); color: white; cursor: pointer; font-weight: 600;">
+                Get Started
+            </button>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <span>TERMS</span>
+            <span>PRIVACY POLICY</span>
+            <span>CONTACT US</span>
+        </div>
+        <div>© 2026, Your Company Ltd. All rights reserved.</div>
+    </footer>
+
+    <script>
+        let selectedFiles = [];
+
+        // Drag & Drop Configuration
+        const dropZone = document.getElementById('drop-zone');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        
+        dropZone.addEventListener('drop', (e) => {
+            dropZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            const list = document.getElementById('file-list');
+            list.innerHTML = selectedFiles.map(f => `<div class="file-item">📄 ${f.name}</div>`).join('');
+            checkForm();
+        }
+
+        function checkForm() {
+            const name = document.getElementById('userName').value;
+            const email = document.getElementById('userEmail').value;
+            const btn = document.getElementById('submit-btn');
+            
+            if(name.trim() !== "" && email.includes('@') && selectedFiles.length > 0) {
+                btn.classList.add('active');
+                btn.disabled = false;
+            } else {
+                btn.classList.remove('active');
+                btn.disabled = true;
+            }
+        }
+
+        async function uploadData() {
+            const btn = document.getElementById('submit-btn');
+            const status = document.getElementById('status-text');
+            const azureUrl = "https://uploadnode-c9gudfdvb3cpf5ca.canadacentral-01.azurewebsites.net/api/GuestUpload";
+            
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            const userName = document.getElementById('userName').value;
+            const userEmail = document.getElementById('userEmail').value;
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                for (let file of selectedFiles) {
+                    status.innerText = `Uploading: ${file.name}...`;
+                    const finalUrl = `${azureUrl}?name=${encodeURIComponent(file.name)}&userName=${encodeURIComponent(userName)}&userEmail=${encodeURIComponent(userEmail)}&date=${today}`;
+                    
+                    const response = await fetch(finalUrl, {
+                        method: "POST",
+                        body: file,
+                        headers: { "Content-Type": "application/octet-stream" }
+                    });
+
+                    if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
+                }
+
+                // Show Success
+                document.getElementById('upload-screen').style.display = 'none';
+                document.getElementById('success-screen').style.display = 'block';
+
+            } catch (err) {
+                status.innerText = "Error: " + err.message;
+                status.style.color = "red";
+                btn.innerText = "Upload";
+                btn.disabled = false;
+            }
+        }
+
+        function startAgain() {
+            // This completely resets the page state
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>
