@@ -27,12 +27,12 @@
     
     <div class="form-group">
         <label>Full Name</label>
-        <input type="text" id="userName" placeholder="e.g. Dilip Vyas">
+        <input type="text" id="userName" placeholder="e.g. John Doe">
     </div>
 
     <div class="form-group">
         <label>Email Address</label>
-        <input type="email" id="userEmail" placeholder="e.g. dilip@live.com">
+        <input type="email" id="userEmail" placeholder="e.g. user@example.com">
     </div>
 
     <div class="form-group">
@@ -61,7 +61,7 @@
 
         const files = fileInp.files;
         const totalFiles = files.length;
-        const azureUrl = "https://uploadnode-c9gudfdvb3cpf5ca.canadacentral-01.azurewebsites.net/api/GuestUpload?";
+        const azureUrl = "https://uploadnode-c9gudfdvb3cpf5ca.canadacentral-01.azurewebsites.net/api/GuestUpload";
         const today = new Date().toISOString().split('T')[0];
 
         // Reset and show progress bar
@@ -102,4 +102,5 @@
 </script>
 
 </body>
+
 </html>
