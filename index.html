@@ -1,49 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>New Joinee Upload Portal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Joinee Document Portal</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 30px; background-color: #f4f7f6; }
-        .upload-card { 
-            background: white; padding: 25px; border-radius: 10px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 450px; margin: auto; 
+        :root {
+            --primary-color: #0078d4;
+            --success-color: #28a745;
+            --bg-color: #f4f7f6;
         }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; }
-        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        button { 
-            width: 100%; padding: 12px; background-color: #0078d4; color: white; 
-            border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 10px;
-        }
-        /* Style for the Progress Bar */
-        progress { width: 100%; height: 20px; margin-top: 15px; display: none; }
-        #status { margin-top: 20px; text-align: center; font-weight: bold; font-size: 14px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { text-align: center; color: #333; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; }
+        input[type="text"], input[type="email"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        input[type="file"] { width: 100%; padding: 10px; background: #fafafa; border: 1px dashed #bbb; border-radius: 6px; cursor: pointer; }
+        button { width: 100%; padding: 14px; background-color: var(--primary-color); color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #005a9e; }
+        .success-btn { background-color: var(--success-color); margin-top: 15px; }
+        .success-btn:hover { background-color: #218838; }
+        
+        #progressContainer { display: none; margin-top: 20px; }
+        progress { width: 100%; height: 20px; border-radius: 10px; }
+        #status { text-align: center; margin-top: 10px; font-size: 14px; color: #666; font-weight: 500; }
+        
+        #successScreen { display: none; text-align: center; padding: 20px; }
+        .check-icon { font-size: 60px; color: var(--success-color); margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-<div class="upload-card">
-    <h2 style="text-align: center;">Onboarding Documents</h2>
-    
-    <div class="form-group">
-        <label>Full Name</label>
-        <input type="text" id="userName" placeholder="e.g. John Doe">
+<div class="card">
+    <div id="uploadForm">
+        <h2>Document Upload</h2>
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="userName" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="userEmail" placeholder="john@example.com">
+        </div>
+        <div class="form-group">
+            <label>Select Documents (PDF, DOCX, TXT)</label>
+            <input type="file" id="userFile" accept=".pdf,.docx,.doc,.txt" multiple>
+        </div>
+        <button type="button" id="submitBtn" onclick="uploadData()">Submit Documents</button>
+        
+        <div id="progressContainer">
+            <progress id="uploadProgress" value="0" max="100"></progress>
+            <p id="status"></p>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" id="userEmail" placeholder="e.g. user@example.com">
+    <div id="successScreen">
+        <div class="check-icon">✔</div>
+        <h2 style="color: var(--success-color);">Submitted!</h2>
+        <p>Your documents have been uploaded successfully to your onboarding folder.</p>
+        <button class="success-btn" onclick="resetForm()">Get Started Again</button>
     </div>
-
-    <div class="form-group">
-        <label>Select Files (PDF, DOCX, TXT)</label>
-        <input type="file" id="userFile" accept=".pdf,.docx,.doc,.txt" multiple>
-    </div>
-
-    <button type="button" onclick="uploadData()">Submit Documents</button>
-
-    <progress id="uploadProgress" value="0" max="100"></progress>
-    <p id="status"></p>
 </div>
 
 <script>
@@ -51,63 +68,83 @@
         const nameInp = document.getElementById("userName");
         const emailInp = document.getElementById("userEmail");
         const fileInp = document.getElementById("userFile");
+        const submitBtn = document.getElementById("submitBtn");
         const statusLbl = document.getElementById("status");
         const progressBar = document.getElementById("uploadProgress");
+        const progressContainer = document.getElementById("progressContainer");
 
+        // Validation
         if (!nameInp.value || !emailInp.value || fileInp.files.length === 0) {
-            alert("Please provide name, email, and select at least one file.");
+            alert("Please provide your name, email, and at least one document.");
             return;
         }
 
         const files = fileInp.files;
         const totalFiles = files.length;
+        // Replace with your exact Azure URL (No trailing ?)
         const azureUrl = "https://uploadnode-c9gudfdvb3cpf5ca.canadacentral-01.azurewebsites.net/api/GuestUpload";
         const today = new Date().toISOString().split('T')[0];
 
-        // Reset and show progress bar
-        statusLbl.style.color = "#0078d4";
-        progressBar.style.display = "block";
-        progressBar.value = 0;
+        // Prepare UI for upload
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Uploading...";
+        progressContainer.style.display = "block";
 
-        for (let i = 0; i < totalFiles; i++) {
-            const file = files[i];
-            statusLbl.innerText = `Uploading (${i + 1}/${totalFiles}): ${file.name}`;
+        try {
+            for (let i = 0; i < totalFiles; i++) {
+                const file = files[i];
+                statusLbl.innerText = `Uploading (${i + 1}/${totalFiles}): ${file.name}`;
 
-            const finalUrl = `${azureUrl}?name=${encodeURIComponent(file.name)}&userName=${encodeURIComponent(nameInp.value)}&userEmail=${encodeURIComponent(emailInp.value)}&date=${encodeURIComponent(today)}`;
+                // Build clean URL with one ? and encoded parameters
+                const finalUrl = `${azureUrl}?name=${encodeURIComponent(file.name)}&userName=${encodeURIComponent(nameInp.value)}&userEmail=${encodeURIComponent(emailInp.value)}&date=${encodeURIComponent(today)}`;
 
-            try {
-    const response = await fetch(finalUrl, {
-        method: "POST",
-        body: file, // This MUST be the file object from the input
-        headers: {
-            "Content-Type": "application/octet-stream"
-        }
-    });
+                const response = await fetch(finalUrl, {
+                    method: "POST",
+                    body: file, // Sending raw file blob
+                    headers: { "Content-Type": "application/octet-stream" }
+                });
 
-
-                if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Upload failed for ${file.name}: ${errorText}`);
+                }
 
                 // Update progress percentage
-                const percentComplete = Math.round(((i + 1) / totalFiles) * 100);
-                progressBar.value = percentComplete;
-
-            } catch (err) {
-                statusLbl.style.color = "red";
-                statusLbl.innerText = "Error: " + err.message;
-                return;
+                progressBar.value = Math.round(((i + 1) / totalFiles) * 100);
             }
-        }
 
-        statusLbl.style.color = "green";
-        statusLbl.innerText = "All documents submitted successfully!";
-        // Clear files after success
-        fileInp.value = ""; 
+            // SUCCESS: Switch screens
+            document.getElementById("uploadForm").style.display = "none";
+            document.getElementById("successScreen").style.display = "block";
+
+        } catch (err) {
+            alert("An error occurred: " + err.message);
+            statusLbl.style.color = "red";
+            statusLbl.innerText = "Upload failed. Please try again.";
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Documents";
+        }
+    }
+
+    function resetForm() {
+        // Reset the View
+        document.getElementById("uploadForm").style.display = "block";
+        document.getElementById("successScreen").style.display = "none";
+        
+        // Reset the Data
+        document.getElementById("userName").value = "";
+        document.getElementById("userEmail").value = "";
+        document.getElementById("userFile").value = "";
+        document.getElementById("submitBtn").disabled = false;
+        document.getElementById("submitBtn").innerText = "Submit Documents";
+        
+        // Reset Progress
+        document.getElementById("progressContainer").style.display = "none";
+        document.getElementById("uploadProgress").value = 0;
+        document.getElementById("status").innerText = "";
+        document.getElementById("status").style.color = "#666";
     }
 </script>
 
 </body>
-
 </html>
-
-
-
